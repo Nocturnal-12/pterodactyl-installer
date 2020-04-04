@@ -293,8 +293,8 @@ function install_nodejs {
 
 function ptdl_dl {
   echo "* Installing pterodactyl daemon .. "
-  mkdir -p /home/daemon /home/daemon-data
-  cd /home/daemon || exit
+  mkdir -p /home/node/daemon /home/node/daemon-data
+  cd /home/node/daemon || exit
 
   curl -L "$DL_URL" | tar --strip-components=1 -xzv
   npm install --only=production --unsafe-perm
@@ -313,7 +313,7 @@ function systemd_file {
 function install_standalone_sftp_server {
   echo "* Installing standalone SFTP server.."
 
-  INSTALL_PATH="/home/daemon/sftp-server"
+  INSTALL_PATH="/home/node/daemon/sftp-server"
 
   curl -Lo $INSTALL_PATH https://github.com/pterodactyl/sftp-server/releases/download/v1.0.4/sftp-server
   chmod +x $INSTALL_PATH

@@ -59,13 +59,13 @@ List of supported installation setups for panel and daemon (installations suppor
 Using the Pterodactyl Panel installation script:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/VilhelmPrytz/pterodactyl-installer/master/install-panel.sh)
+bash <(curl -s https://raw.githubusercontent.com/Nocturnal-12/pterodactyl-installer/master/install-panel.sh)
 ```
 
 Using the Pterodactyl Daemon installation script:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/VilhelmPrytz/pterodactyl-installer/master/install-daemon.sh)
+bash <(curl -s https://raw.githubusercontent.com/Nocturnal-12/pterodactyl-installer/master/install-daemon.sh)
 ```
 
 The script will guide you through the install.

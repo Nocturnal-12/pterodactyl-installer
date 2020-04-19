@@ -72,6 +72,14 @@ function print_error {
   echo ""
 }
 
+function print_warning {
+  COLOR_YELLOW='\033[1;33m'
+  COLOR_NC='\033[0m'
+  echo ""
+  echo -e "* ${COLOR_YELLOW}WARNING${COLOR_NC}: $1"
+  echo ""
+}
+
 function print_brake {
   for ((n=0;n<$1;n++));
     do
@@ -113,7 +121,7 @@ function detect_distro {
     OS=$(uname -s)
     OS_VER=$(uname -r)
   fi
-  
+
   OS=$(echo "$OS" | awk '{print tolower($0)}')
   OS_VER_MAJOR=$(echo "$OS_VER" | cut -d. -f1)
 }
@@ -219,6 +227,7 @@ function configure {
   php artisan p:environment:mail
 
   # configures database
+  print_warning "You must type 'yes' or else the installer will fail! The default response 'no' will not properly initialize the database!"
   php artisan migrate --seed
 
   echo "* The installer will now ask you to create the initial admin user account."
@@ -332,8 +341,11 @@ function ubuntu18_dep {
   # Install Dependencies
   apt -y install php7.2 php7.2-cli php7.2-gd php7.2-mysql php7.2-pdo php7.2-mbstring php7.2-tokenizer php7.2-bcmath php7.2-xml php7.2-fpm php7.2-curl php7.2-zip mariadb-server nginx curl tar unzip git redis-server
 
+  # enable services
   systemctl start mariadb
   systemctl enable mariadb
+  systemctl start redis-server
+  systemctl enable redis-server
 
   echo "* Dependencies for Ubuntu installed!"
 }
@@ -355,8 +367,11 @@ function ubuntu16_dep {
   # Install Dependencies
   apt -y install php7.2 php7.2-cli php7.2-gd php7.2-mysql php7.2-pdo php7.2-mbstring php7.2-tokenizer php7.2-bcmath php7.2-xml php7.2-fpm php7.2-curl php7.2-zip mariadb-server nginx curl tar unzip git redis-server
 
+  # enable services
   systemctl start mariadb
   systemctl enable mariadb
+  systemctl start redis-server
+  systemctl enable redis-server
 
   echo "* Dependencies for Ubuntu installed!"
 }
@@ -368,7 +383,7 @@ function debian_jessie_dep {
   apt -y install dirmngr
 
   # install PHP 7.3 using sury's repo instead of PPA
-  # this guide shows how: https://vilhelmprytz.se/2018/08/22/install-php72-on-Debian-8-and-9.html 
+  # this guide shows how: https://vilhelmprytz.se/2018/08/22/install-php72-on-Debian-8-and-9.html
   apt install ca-certificates apt-transport-https lsb-release -y
   wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
   echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list
@@ -384,8 +399,11 @@ function debian_jessie_dep {
   # Install Dependencies
   apt -y install php7.3 php7.3-cli php7.3-gd php7.3-mysql php7.3-pdo php7.3-mbstring php7.3-tokenizer php7.3-bcmath php7.3-xml php7.3-fpm php7.3-curl php7.3-zip mariadb-server nginx curl tar unzip git redis-server
 
+  # enable services
   systemctl start mariadb
   systemctl enable mariadb
+  systemctl start redis-server
+  systemctl enable redis-server
 
   echo "* Dependencies for Debian 8/9 installed!"
 }
@@ -405,8 +423,11 @@ function debian_dep {
   # install dependencies
   apt -y install php7.3 php7.3-cli php7.3-common php7.3-gd php7.3-mysql php7.3-mbstring php7.3-bcmath php7.3-xml php7.3-fpm php7.3-curl php7.3-zip mariadb-server nginx curl tar unzip git redis-server
 
+  # enable services
   systemctl start mariadb
   systemctl enable mariadb
+  systemctl start redis-server
+  systemctl enable redis-server
 
   echo "* Dependencies for Debian 10 installed!"
 }
@@ -431,7 +452,7 @@ function centos7_dep {
   curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
 
   # install dependencies
-  yum -y install install php php-common php-fpm php-cli php-json php-mysqlnd php-mcrypt php-gd php-mbstring php-pdo php-zip php-bcmath php-dom php-opcache mariadb-server nginx curl tar zip unzip git redis
+  yum -y install php php-common php-fpm php-cli php-json php-mysqlnd php-mcrypt php-gd php-mbstring php-pdo php-zip php-bcmath php-dom php-opcache mariadb-server nginx curl tar zip unzip git redis
 
   # enable services
   systemctl enable mariadb
@@ -511,12 +532,12 @@ function firewall_ufw {
 
   echo -e "\n* Enabling Uncomplicated Firewall (UFW)"
   echo "* Opening port 22 (SSH), 80 (HTTP) and 443 (HTTPS)"
-  
+
   # pointing to /dev/null silences the command output
   ufw allow ssh > /dev/null
   ufw allow http > /dev/null
   ufw allow https > /dev/null
-  
+
   ufw enable
   ufw status numbered | sed '/v6/d'
 }
@@ -711,6 +732,17 @@ function ask_letsencrypt {
 }
 
 function main {
+  # check if we can detect an already existing installation
+  if [ -d "/var/www/pterodactyl" ]; then
+    print_warning "The script has detected that you already have Pterodactyl panel on your system! You cannot run the script multiple times, it will fail!"
+    echo -e -n "* Are you sure you want to proceed? (y/N): "
+    read -r CONFIRM_PROCEED
+    if [[ ! "$CONFIRM_PROCEED" =~ [Yy] ]]; then
+      print_error "Installation aborted!"
+      exit 1
+    fi
+  fi
+
   # detect distro
   detect_distro
 
@@ -831,7 +863,7 @@ function main {
 
     echo -n "* Assume SSL or not? (y/N): "
     read -r ASSUME_SSL_INPUT
-    
+
     if [[ "$ASSUME_SSL_INPUT" =~ [Yy] ]]; then
       ASSUME_SSL=true
     fi
